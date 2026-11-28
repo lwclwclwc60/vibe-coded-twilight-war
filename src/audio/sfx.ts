@@ -16,9 +16,29 @@ export const SHOT_MIX: Record<GunKind, { rate: number; lowpass: number; gain: nu
   sniper: { rate: 0.75, lowpass: 13500, gain: 0.36 },
 };
 
+type SampleKey = 'pistol' | 'greatsword' | 'knife' | 'claw' | 'shieldBash' | 'hit' | 'switch';
+
+const SAMPLE_FILES: Record<SampleKey, string> = {
+  pistol: 'pistol-shot.wav',
+  greatsword: 'greatsword-slash.wav',
+  knife: 'knife-slash.wav',
+  claw: 'claw-slash.wav',
+  shieldBash: 'shield-bash.wav',
+  hit: 'melee-hit.wav',
+  switch: 'weapon-switch.wav',
+};
+
+interface PlaySampleOptions {
+  volume: number;
+  rate?: number;
+  pitchJitter?: number;
+  lowpass?: number;
+  fallback: () => void;
+}
+
 class SoundEngine {
   private ctx: AudioContext | null = null;
-  private gunshotBuffer: Promise<AudioBuffer | null> | null = null;
+  private sampleBuffers = new Map<SampleKey, Promise<AudioBuffer | null>>();
   private output: DynamicsCompressorNode | null = null;
   private master: GainNode | null = null;
   private activeCharge: { source: OscillatorNode; gain: GainNode } | null = null;
@@ -36,6 +56,7 @@ class SoundEngine {
 
   unlock() {
     this.ensureContext();
+    this.prepareSamples();
   }
 
   private ensureContext(resume = true): AudioContext | null {
@@ -117,41 +138,73 @@ class SoundEngine {
     noise.start(now);
   }
 
-  prepareGunshot() {
-    const ctx = this.ensureContext(false);
-    if (!ctx || this.gunshotBuffer) return;
-    this.gunshotBuffer = fetch(`${import.meta.env.BASE_URL}assets/audio/pistol-shot.wav`)
+  private loadSample(ctx: AudioContext, key: SampleKey): Promise<AudioBuffer | null> {
+    const existing = this.sampleBuffers.get(key);
+    if (existing) return existing;
+    const promise = fetch(`${import.meta.env.BASE_URL}assets/audio/${SAMPLE_FILES[key]}`)
       .then((response) => {
-        if (!response.ok) throw new Error('Gunshot sample unavailable');
+        if (!response.ok) throw new Error(`Audio sample unavailable: ${SAMPLE_FILES[key]}`);
         return response.arrayBuffer();
       })
       .then((bytes) => ctx.decodeAudioData(bytes))
       .catch(() => null);
+    this.sampleBuffers.set(key, promise);
+    return promise;
   }
 
-  gunshot(kind: GunKind, volume = 1) {
+  prepareSamples() {
+    const ctx = this.ensureContext(false);
+    if (!ctx) return;
+    for (const key of Object.keys(SAMPLE_FILES) as SampleKey[]) {
+      void this.loadSample(ctx, key);
+    }
+  }
+
+  prepareGunshot() {
+    this.prepareSamples();
+  }
+
+  private playSample(key: SampleKey, opts: PlaySampleOptions) {
     const ctx = this.ensureContext();
-    if (!ctx || volume <= 0) return;
-    this.prepareGunshot();
-    const mix = SHOT_MIX[kind];
-    void this.gunshotBuffer?.then((buffer) => {
+    if (!ctx || opts.volume <= 0) return;
+    const bufferPromise = this.loadSample(ctx, key);
+    void bufferPromise.then((buffer) => {
       if (this.muted) return;
       if (!buffer) {
-        this.playNoise(0.15, 0.17 * volume, 3800);
+        opts.fallback();
         return;
       }
 
       const source = ctx.createBufferSource();
       source.buffer = buffer;
-      // Small variations keep successive shots from sounding identical.
-      source.playbackRate.value = mix.rate * (0.97 + Math.random() * 0.06);
-      const filter = ctx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.value = mix.lowpass;
+      const jitter = opts.pitchJitter ?? 0.04;
+      const baseRate = opts.rate ?? 1;
+      source.playbackRate.value = baseRate * (1 - jitter + Math.random() * jitter * 2);
+
       const gain = ctx.createGain();
-      gain.gain.value = mix.gain * volume;
-      source.connect(filter).connect(gain).connect(this.output!);
+      gain.gain.value = opts.volume;
+
+      if (opts.lowpass) {
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = opts.lowpass;
+        source.connect(filter).connect(gain).connect(this.output!);
+      } else {
+        source.connect(gain).connect(this.output!);
+      }
       source.start();
+    });
+  }
+
+  gunshot(kind: GunKind, volume = 1) {
+    if (volume <= 0) return;
+    const mix = SHOT_MIX[kind];
+    this.playSample('pistol', {
+      volume: mix.gain * volume,
+      rate: mix.rate,
+      pitchJitter: 0.03,
+      lowpass: mix.lowpass,
+      fallback: () => this.playNoise(0.15, 0.17 * volume, 3800),
     });
   }
 
@@ -201,8 +254,15 @@ class SoundEngine {
 
   shieldBash(volume = 1) {
     if (volume <= 0) return;
-    this.playNoise(0.11, 0.22 * volume, 980);
-    this.playTone(98, 42, 0.11, 'sine', 0.12 * volume);
+    this.playSample('shieldBash', {
+      volume: 0.50 * volume,
+      rate: 0.95,
+      pitchJitter: 0.05,
+      fallback: () => {
+        this.playNoise(0.11, 0.22 * volume, 980);
+        this.playTone(98, 42, 0.11, 'sine', 0.12 * volume);
+      },
+    });
   }
 
   slash(kindOrHeavy: MeleeKind | boolean = false, volume = 1) {
@@ -212,21 +272,38 @@ class SoundEngine {
       return;
     }
     if (kindOrHeavy === 'greatsword' || kindOrHeavy === true) {
-      this.playNoise(0.22, 0.30 * volume, 1350);
-      this.playTone(240, 85, 0.18, 'triangle', 0.14 * volume);
+      this.playSample('greatsword', {
+        volume: 0.52 * volume,
+        rate: 0.92,
+        pitchJitter: 0.05,
+        fallback: () => {
+          this.playNoise(0.22, 0.30 * volume, 1350);
+          this.playTone(240, 85, 0.18, 'triangle', 0.14 * volume);
+        },
+      });
       return;
     }
     if (kindOrHeavy === 'claw') {
-      this.playNoise(0.095, 0.27 * volume, 3600);
-      this.playTone(1150, 380, 0.075, 'triangle', 0.13 * volume);
-      this.playNoise(0.085, 0.24 * volume, 4100, 0.045);
-      this.playTone(1350, 440, 0.07, 'triangle', 0.11 * volume, 0.045);
+      this.playSample('claw', {
+        volume: 0.44 * volume,
+        rate: 1.08,
+        pitchJitter: 0.06,
+        fallback: () => {
+          this.playNoise(0.095, 0.27 * volume, 3600);
+          this.playTone(1150, 380, 0.075, 'triangle', 0.13 * volume);
+        },
+      });
       return;
     }
-    // Tactical knife thrust / metallic slice
-    this.playNoise(0.11, 0.28 * volume, 4200);
-    this.playTone(1450, 420, 0.085, 'triangle', 0.14 * volume);
-    this.playTone(2300, 920, 0.055, 'sine', 0.08 * volume, 0.015);
+    this.playSample('knife', {
+      volume: 0.44 * volume,
+      rate: 1.04,
+      pitchJitter: 0.06,
+      fallback: () => {
+        this.playNoise(0.11, 0.28 * volume, 4200);
+        this.playTone(1450, 420, 0.085, 'triangle', 0.14 * volume);
+      },
+    });
   }
 
   ultimate() {
@@ -235,7 +312,13 @@ class SoundEngine {
   }
 
   switchWeapon(comboCancel = false) {
-    this.playNoise(0.05, comboCancel ? 0.095 : 0.06, 2600);
+    this.playSample('switch', {
+      volume: comboCancel ? 0.34 : 0.22,
+      rate: comboCancel ? 1.18 : 1.02,
+      pitchJitter: 0.04,
+      lowpass: comboCancel ? 8000 : 5200,
+      fallback: () => this.playNoise(0.05, comboCancel ? 0.095 : 0.06, 2600),
+    });
   }
 
   emptyGun() {
@@ -279,7 +362,12 @@ class SoundEngine {
   }
 
   hit(crit = false) {
-    this.playNoise(crit ? 0.085 : 0.048, crit ? 0.13 : 0.065, crit ? 2200 : 1150);
+    this.playSample('hit', {
+      volume: crit ? 0.42 : 0.28,
+      rate: crit ? 1.14 : 0.96,
+      pitchJitter: 0.05,
+      fallback: () => this.playNoise(crit ? 0.085 : 0.048, crit ? 0.13 : 0.065, crit ? 2200 : 1150),
+    });
   }
 
   playerHurt() {

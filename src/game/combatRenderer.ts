@@ -145,22 +145,22 @@ export function drawSlashEffect(ctx: CanvasRenderingContext2D, s: SlashEffect) {
       ctx.stroke();
     }
   } else {
-    // 由右至左逆時針弧形刀光軌跡（由角色右側正角掃向左側負角）
-    const startAng = s.arc / 2;
+    // 由左至右順時針弧形刀光軌跡（由角色左側負角掃向右側正角）
+    const startAng = -s.arc / 2;
     const curEnd = s.isUltimate
-      ? -s.arc / 2
-      : startAng - s.arc * clamp(progress * 1.25, 0.18, 1.0);
-    const trailStart = s.isUltimate ? startAng : Math.min(startAng, curEnd + s.arc * 0.72);
+      ? s.arc / 2
+      : startAng + s.arc * clamp(progress * 1.25, 0.18, 1.0);
+    const trailStart = s.isUltimate ? startAng : Math.max(startAng, curEnd - s.arc * 0.72);
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.arc(0, 0, s.reach, trailStart, curEnd, true);
+    ctx.arc(0, 0, s.reach, trailStart, curEnd, false);
     ctx.closePath();
     ctx.fillStyle = `${s.color}${s.isUltimate ? '66' : '38'}`;
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(0, 0, s.reach, trailStart, curEnd, true);
+    ctx.arc(0, 0, s.reach, trailStart, curEnd, false);
     ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = s.isUltimate ? 6 : 4;
+    ctx.lineWidth = s.isUltimate ? 6 : 4.5;
     ctx.stroke();
   }
   ctx.restore();
@@ -347,53 +347,71 @@ export function drawPickup(ctx: CanvasRenderingContext2D, pk: PickupItem) {
         ctx.restore();
       }
     } else if (mk === 'greatsword') {
-      // 修長光暈武士大刀（雙色銀鋼斜刃＋細金圓鍔＋金紋柄＋圓金球首）
+      // 方案 A：經典光暈太刀（粗黑描邊＋微彎藍灰銀刃＋暖金鍔＋藍鋼菱格柄＋發光金球首）
       ctx.rotate(-0.42);
-      // 暗鋼刀背＋雪亮斜切雙刃
+      // 弧形太刀刃（上背凹微彎、下刃凸亮銀切先）
       ctx.beginPath();
-      ctx.moveTo(-2, -2.2);
-      ctx.quadraticCurveTo(14, -3.4, 30, -1.6);
-      ctx.lineTo(26.5, 2.2);
-      ctx.quadraticCurveTo(12, 1.5, -2, 2.2);
+      ctx.moveTo(1, -2.0);
+      ctx.quadraticCurveTo(15, -1.6, 30.5, -3.8);
+      ctx.lineTo(26.5, 0.5);
+      ctx.quadraticCurveTo(14, 2.8, 1, 2.2);
       ctx.closePath();
       ctx.fillStyle = '#F8FAFC';
       ctx.fill();
       ctx.strokeStyle = '#020617';
-      ctx.lineWidth = 1.8;
+      ctx.lineWidth = 2.0;
       ctx.lineJoin = 'round';
       ctx.stroke();
 
+      // 刀背藍灰金屬漸層陰影
+      const spineGrad = ctx.createLinearGradient(0, -2.8, 0, 0.4);
+      spineGrad.addColorStop(0, '#334155');
+      spineGrad.addColorStop(1, '#64748B');
       ctx.beginPath();
-      ctx.moveTo(-1.5, -2.0);
-      ctx.quadraticCurveTo(14, -3.1, 29, -1.5);
-      ctx.lineTo(27.2, 0.2);
-      ctx.quadraticCurveTo(13, -1.0, -1.5, 0);
+      ctx.moveTo(1.4, -1.8);
+      ctx.quadraticCurveTo(15, -1.4, 29.3, -3.4);
+      ctx.lineTo(27.8, -1.2);
+      ctx.quadraticCurveTo(14.5, 0.4, 1.4, 0.1);
       ctx.closePath();
-      ctx.fillStyle = '#475569';
+      ctx.fillStyle = spineGrad;
       ctx.fill();
 
-      // 細長金色護手鍔
-      ctx.fillStyle = '#EAB308';
+      // 暖金鍔口＆緣金箍
+      ctx.fillStyle = '#F59E0B';
       ctx.strokeStyle = '#020617';
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.6;
+      ctx.fillRect(-1.2, -2.2, 2.5, 4.4);
+      ctx.strokeRect(-1.2, -2.2, 2.5, 4.4);
+
+      ctx.fillStyle = '#EAB308';
       ctx.beginPath();
-      ctx.roundRect(-5, -4.8, 3, 9.5, 1.1);
+      ctx.roundRect(-4.2, -4.9, 3.2, 9.8, 1.2);
       ctx.fill();
       ctx.stroke();
 
-      // 深藍金菱紋柄＋圓金球首
-      ctx.fillStyle = '#0F172A';
-      ctx.fillRect(-17, -2.1, 12, 4.2);
-      ctx.strokeRect(-17, -2.1, 12, 4.2);
-      ctx.fillStyle = '#FACC15';
-      for (const dx of [-14.5, -11, -7.5]) {
-        ctx.fillRect(dx, -0.9, 1.8, 1.8);
-      }
-      ctx.fillStyle = '#EAB308';
+      // 深藍鋼菱格刀柄＋突出圓金球首
+      ctx.fillStyle = '#1E293B';
       ctx.beginPath();
-      ctx.arc(-18, 0, 2.3, 0, Math.PI * 2);
+      ctx.roundRect(-16.5, -2.1, 12.3, 4.2, 1.0);
       ctx.fill();
       ctx.stroke();
+      ctx.fillStyle = '#94A3B8';
+      for (const dx of [-13.8, -10.3, -6.8]) {
+        ctx.save();
+        ctx.translate(dx, 0);
+        ctx.rotate(Math.PI / 4);
+        ctx.fillRect(-1.1, -1.1, 2.2, 2.2);
+        ctx.restore();
+      }
+      ctx.fillStyle = '#F59E0B';
+      ctx.beginPath();
+      ctx.arc(-19.2, 0, 3.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#FDE68A';
+      ctx.beginPath();
+      ctx.arc(-19.7, -0.7, 1.1, 0, Math.PI * 2);
+      ctx.fill();
     } else {
       // 弧形黑脊亮銀刃戰術小刀
       ctx.rotate(-0.52);
@@ -1127,83 +1145,146 @@ export function drawCharacter(ctx: CanvasRenderingContext2D, params: CharacterRe
       ctx.restore();
     } else if (meleeKind === 'greatsword') {
       const drawKatana = (tsubaX: number, isSwinging: boolean) => {
-        // Dark navy diamond-wrapped tsuka hilt extending cleanly behind tsuba
+        // 發光圓形金色球首（柄頭）
+        const pommelX = tsubaX - 20.5;
+        ctx.save();
+        ctx.fillStyle = 'rgba(251, 191, 36, 0.35)';
+        ctx.beginPath();
+        ctx.arc(pommelX, 0, 5.0, 0, Math.PI * 2);
+        ctx.fill();
+
+        const pommelGrad = ctx.createRadialGradient(pommelX - 1.1, -1.1, 0.5, pommelX, 0, 3.9);
+        pommelGrad.addColorStop(0, '#FEF3C7');
+        pommelGrad.addColorStop(0.5, '#F59E0B');
+        pommelGrad.addColorStop(1, '#B45309');
+        ctx.fillStyle = pommelGrad;
+        ctx.strokeStyle = '#020617';
+        ctx.lineWidth = 1.9;
+        ctx.beginPath();
+        ctx.arc(pommelX, 0, 3.8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#F59E0B';
+        ctx.strokeStyle = '#78350F';
+        ctx.lineWidth = 1.0;
+        ctx.beginPath();
+        ctx.arc(pommelX, 0, 1.9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#FEF9C3';
+        ctx.beginPath();
+        ctx.arc(pommelX - 0.7, -0.7, 0.65, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // 藍鋼菱格編織刀柄 + 金色緣口
         ctx.fillStyle = '#1E293B';
         ctx.strokeStyle = '#020617';
-        ctx.lineWidth = 1.7;
+        ctx.lineWidth = 1.9;
         ctx.beginPath();
-        ctx.roundRect(tsubaX - 20, -2.3, 20, 4.6, 1.1);
+        ctx.roundRect(tsubaX - 17, -2.6, 17, 5.2, 1.2);
         ctx.fill();
         ctx.stroke();
-        ctx.fillStyle = '#FACC15';
-        for (const ox of [-17, -12.5, -8, -4]) {
-          ctx.fillRect(tsubaX + ox, -1.0, 2.0, 2.0);
+
+        ctx.fillStyle = '#94A3B8';
+        for (const ox of [-14.5, -10.5, -6.5]) {
+          ctx.save();
+          ctx.translate(tsubaX + ox, 0);
+          ctx.rotate(Math.PI / 4);
+          ctx.fillRect(-1.3, -1.3, 2.6, 2.6);
+          ctx.restore();
         }
-
-        // Round gold kashira pommel
         ctx.fillStyle = '#EAB308';
+        ctx.fillRect(tsubaX - 2.3, -2.3, 2.3, 4.6);
+
+        // 緊湊暖金護手鍔 + 黃金鎺口
+        const tsubaGrad = ctx.createLinearGradient(0, -5.8, 0, 5.8);
+        tsubaGrad.addColorStop(0, '#FDE68A');
+        tsubaGrad.addColorStop(0.5, '#EAB308');
+        tsubaGrad.addColorStop(1, '#B45309');
+        ctx.fillStyle = tsubaGrad;
         ctx.strokeStyle = '#020617';
+        ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        ctx.roundRect(tsubaX, -5.8, 3.6, 11.6, 1.3);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#F59E0B';
         ctx.lineWidth = 1.6;
-        ctx.beginPath();
-        ctx.arc(tsubaX - 21, 0, 2.6, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
+        ctx.fillRect(tsubaX + 3.4, -2.8, 3.4, 5.6);
+        ctx.strokeRect(tsubaX + 3.4, -2.8, 3.4, 5.6);
 
-        // Slim gold tsuba guard
-        ctx.fillStyle = '#EAB308';
+        // 方案 A：粗黑描邊微彎寬幅太刀刃（凹背於 -Y，雪亮凸刃於 +Y 領銜順時針橫斬）
+        const bladeStartX = tsubaX + 6.4;
+        const bladeTipX = tsubaX + 57.5;
         ctx.beginPath();
-        ctx.roundRect(tsubaX, -5.25, 3.4, 10.5, 1.1);
-        ctx.fill();
-        ctx.stroke();
-
-        // Iconic long sleek katana blade (~57px, ~2x character body diameter; bright edge leads right-to-left sweep on -Y)
-        const bladeStartX = tsubaX + 3.4;
-        const bladeTipX = tsubaX + 60;
-        ctx.beginPath();
-        ctx.moveTo(bladeStartX, 2.7);
-        ctx.quadraticCurveTo(bladeStartX + 30, 4.4, bladeTipX, 2.2);
-        ctx.lineTo(bladeTipX - 5.5, -2.6);
-        ctx.quadraticCurveTo(bladeStartX + 27, -1.4, bladeStartX, -2.7);
+        ctx.moveTo(bladeStartX, -2.7);
+        ctx.quadraticCurveTo(bladeStartX + 27, -2.0, bladeTipX, -4.6);
+        ctx.lineTo(bladeTipX - 6.2, 0.6);
+        ctx.quadraticCurveTo(bladeStartX + 28, 3.8, bladeStartX, 2.9);
         ctx.closePath();
         ctx.fillStyle = isSwinging ? '#FFFFFF' : '#F8FAFC';
         ctx.fill();
         ctx.strokeStyle = '#020617';
-        ctx.lineWidth = 1.9;
+        ctx.lineWidth = 2.1;
         ctx.lineJoin = 'round';
         ctx.stroke();
 
-        // Gunmetal-slate spine half along outer (+Y) blade back
+        // 藍灰金屬漸層刀背（沿 -Y 上半刃面延伸至切先）
+        const spineGrad = ctx.createLinearGradient(0, -3.5, 0, 0.5);
+        spineGrad.addColorStop(0, '#334155');
+        spineGrad.addColorStop(1, '#64748B');
         ctx.beginPath();
-        ctx.moveTo(bladeStartX + 0.4, 2.3);
-        ctx.quadraticCurveTo(bladeStartX + 30, 4.0, bladeTipX - 1.5, 2.0);
-        ctx.lineTo(bladeTipX - 3.5, -0.2);
-        ctx.quadraticCurveTo(bladeStartX + 28, 1.2, bladeStartX + 0.4, 0);
+        ctx.moveTo(bladeStartX + 0.6, -2.4);
+        ctx.quadraticCurveTo(bladeStartX + 27, -1.7, bladeTipX - 1.5, -4.1);
+        ctx.lineTo(bladeTipX - 4.0, -1.6);
+        ctx.quadraticCurveTo(bladeStartX + 27, 0.5, bladeStartX + 0.6, 0.2);
         ctx.closePath();
-        ctx.fillStyle = '#475569';
+        ctx.fillStyle = spineGrad;
         ctx.fill();
+
+        // 刀尖銀白反光紋
+        ctx.beginPath();
+        ctx.moveTo(bladeTipX - 18, -0.6);
+        ctx.quadraticCurveTo(bladeTipX - 9, 0.4, bladeTipX - 4.2, -1.2);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.lineWidth = 1.1;
+        ctx.stroke();
       };
 
       if (attackAnimKind === 'greatsword' && attackAnimProgress > 0) {
-        // 大刀由右至左逆時針橫斬：從角色右側（+1.45）順暢掃向左側（-1.50），雪亮刀刃朝前斬出
-        const swingRot = 1.45 - attackAnimProgress * 2.95;
+        // 大刀由左至右順時針橫斬：由左側蓄勢（-1.75）快速橫掃過正前方（0）再收刀到右側（+1.55）
+        const eased = 1 - Math.pow(1 - attackAnimProgress, 1.45);
+        const swingRot = -1.75 + eased * 3.30;
+        const swingTsubaX = bodyR * 1.46;
         ctx.save();
         ctx.rotate(swingRot);
-        drawKatana(bodyR * 1.18, true);
-        drawGrip(bodyR * 0.55, 2.5, 1);
-        drawGrip(bodyR * 0.98, -1.5, -1);
+        drawKatana(swingTsubaX, true);
+        // 雙手整齊握於鍔後方深藍刀柄，不越過護手
+        drawGrip(swingTsubaX - 13.5, 1.4, 1);
+        drawGrip(swingTsubaX - 5.5, -1.2, -1);
         ctx.restore();
       } else {
-        // 經典光暈戰記右側身平舉握刀姿：刀身沿角色右側腰際筆直前指，不擋臉
-        const flankX = bodyR * 0.15 + armSwing * 0.14;
-        const flankY = bodyR * 0.90;
+        // 待機姿勢（刀背左肩）：雙手喺前左方緊握刀柄，金色球首朝前突出，刀身向後架於左肩外側
+        const anchorX = bodyR * 0.14 + armSwing * 0.08;
+        const anchorY = -bodyR * 1.06;
+        const idleRot = -Math.PI + 0.24 + armSwing * 0.015;
         ctx.save();
-        ctx.translate(flankX, flankY);
-        ctx.rotate(-0.04);
-        drawKatana(bodyR * 0.48, false);
+        ctx.translate(anchorX, anchorY);
+        ctx.rotate(idleRot);
+        drawKatana(0, false);
         ctx.restore();
 
-        drawGrip(-bodyR * 0.14 + armSwing * 0.14, bodyR * 0.92, 1);
-        drawHand(ctx, bodyR * 0.40 + armSwing * 0.14, bodyR * 0.88, handR, handColor);
+        const cosR = Math.cos(idleRot);
+        const sinR = Math.sin(idleRot);
+        const h1x = anchorX + -5.5 * cosR;
+        const h1y = anchorY + -5.5 * sinR;
+        const h2x = anchorX + -12.5 * cosR;
+        const h2y = anchorY + -12.5 * sinR;
+        drawGrip(h1x, h1y, -1);
+        drawHand(ctx, h2x, h2y, handR * 0.96, handColor);
       }
     } else {
       // 小刀：刺擊時右手筆直前刺、左手後收保持平衡

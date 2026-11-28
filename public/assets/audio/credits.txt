@@ -3,3 +3,39 @@ Source: "9mm pistol shot" by michorvath
 https://freesound.org/people/michorvath/sounds/427592/
 License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
 Edited for gameplay by trimming the lead-in and fading the tail.
+
+greatsword-slash.wav
+Source: "battle/swing.wav" from "RPG Sound Pack" by artisticdude
+https://opengameart.org/content/rpg-sound-pack
+License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
+Edited for gameplay: converted to mono 44.1kHz PCM WAV, trimmed leading silence, peak-normalized to -2 dBFS, and faded out tail.
+
+knife-slash.wav
+Source: "battle/swing2.wav" from "RPG Sound Pack" by artisticdude
+https://opengameart.org/content/rpg-sound-pack
+License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
+Edited for gameplay: converted to mono 44.1kHz PCM WAV, trimmed leading silence, peak-normalized to -2 dBFS, and faded out tail.
+
+claw-slash.wav
+Source: "battle/swing3.wav" from "RPG Sound Pack" by artisticdude
+https://opengameart.org/content/rpg-sound-pack
+License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
+Edited for gameplay: converted to mono 44.1kHz PCM WAV, trimmed leading silence, peak-normalized to -2 dBFS, and faded out tail.
+
+shield-bash.wav
+Source: "inventory/wood-small.wav" from "RPG Sound Pack" by artisticdude
+https://opengameart.org/content/rpg-sound-pack
+License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
+Edited for gameplay: converted to mono 44.1kHz PCM WAV, trimmed leading silence, peak-normalized to -2 dBFS, and faded out tail.
+
+melee-hit.wav
+Source: "inventory/armor-light.wav" from "RPG Sound Pack" by artisticdude
+https://opengameart.org/content/rpg-sound-pack
+License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
+Edited for gameplay: converted to mono 44.1kHz PCM WAV, trimmed to 0.28s, peak-normalized to -2 dBFS, and faded out tail.
+
+weapon-switch.wav
+Source: "battle/sword-unsheathe2.wav" from "RPG Sound Pack" by artisticdude
+https://opengameart.org/content/rpg-sound-pack
+License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
+Edited for gameplay: converted to mono 44.1kHz PCM WAV, trimmed to 0.26s, peak-normalized to -2 dBFS, and faded out tail.

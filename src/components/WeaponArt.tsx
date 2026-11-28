@@ -56,29 +56,43 @@ export const WeaponIconSvg: React.FC<WeaponSvgProps> = ({
     case 'greatsword':
       return (
         <svg viewBox="0 0 64 64" className={className} fill="none">
+          <defs>
+            <linearGradient id="katanaSpineA" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#334155" />
+              <stop offset="100%" stopColor="#64748B" />
+            </linearGradient>
+            <radialGradient id="katanaPommelA" cx="35%" cy="35%" r="65%">
+              <stop offset="0%" stopColor="#FEF3C7" />
+              <stop offset="55%" stopColor="#F59E0B" />
+              <stop offset="100%" stopColor="#B45309" />
+            </radialGradient>
+          </defs>
           <g transform="rotate(-38 32 32)">
-            {/* Long, sleek 《光暈戰記》 katana / odachi blade */}
+            {/* 方案 A：經典光暈太刀（粗黑描邊＋微彎藍灰銀刃＋暖金鍔＋藍鋼菱格柄＋發光金球首） */}
             <path
-              d="M19 29.5 Q39 27.6, 61 30.2 L56.5 34.4 Q37.5 33.4, 19 34.4 Z"
+              d="M22.5 29.2 Q41 29.6, 61.5 26.8 L56.2 32.8 Q40 35.4, 22.5 34.8 Z"
               fill="#F8FAFC"
               stroke="#020617"
-              strokeWidth="2.2"
+              strokeWidth="2.3"
               strokeLinejoin="round"
             />
-            {/* Gunmetal spine half along the upper curve */}
+            {/* 藍灰金屬刀背漸層 */}
             <path
-              d="M19.5 29.7 Q39 28.0, 59.5 30.3 L57 32.1 Q38 30.8, 19.5 32.0 Z"
-              fill="#475569"
+              d="M23.0 29.5 Q41 29.9, 60.0 27.3 L57.5 30.2 Q40.5 32.2, 23.0 32.0 Z"
+              fill="url(#katanaSpineA)"
             />
-            {/* Slim gold tsuba guard */}
-            <ellipse cx="18.2" cy="32" rx="2.0" ry="5.6" fill="#EAB308" stroke="#020617" strokeWidth="1.9" />
-            {/* Dark navy diamond-wrapped tsuka hilt */}
-            <rect x="4.5" y="29.5" width="13" height="5" rx="1.3" fill="#0F172A" stroke="#020617" strokeWidth="1.9" />
-            <path d="M6.4 32 L8.1 30.2 L9.8 32 L8.1 33.8 Z" fill="#FACC15" />
-            <path d="M10.4 32 L12.1 30.2 L13.8 32 L12.1 33.8 Z" fill="#FACC15" />
-            <path d="M14.4 32 L15.8 30.5 L17.2 32 L15.8 33.5 Z" fill="#FACC15" />
-            {/* Round gold kashira pommel */}
-            <circle cx="3.6" cy="32" r="2.6" fill="#EAB308" stroke="#020617" strokeWidth="1.7" />
+            {/* 黃金鎺口＆緊湊暖金鍔 */}
+            <rect x="20" y="29.3" width="3.2" height="5.4" fill="#F59E0B" stroke="#020617" strokeWidth="1.6" />
+            <rect x="17.2" y="26.2" width="3.4" height="11.6" rx="1.2" fill="#EAB308" stroke="#020617" strokeWidth="2.0" />
+            {/* 藍鋼菱格柄 */}
+            <rect x="5.8" y="29.4" width="11.5" height="5.2" rx="1.2" fill="#1E293B" stroke="#020617" strokeWidth="1.9" />
+            <path d="M7.6 32 L9.3 30.2 L11.0 32 L9.3 33.8 Z" fill="#94A3B8" />
+            <path d="M11.6 32 L13.3 30.2 L15.0 32 L13.3 33.8 Z" fill="#94A3B8" />
+            <rect x="15.3" y="29.7" width="1.9" height="4.6" fill="#EAB308" />
+            {/* 突出發光圓形金球首 */}
+            <circle cx="3.8" cy="32" r="4.9" fill="rgba(251, 191, 36, 0.35)" />
+            <circle cx="3.8" cy="32" r="3.6" fill="url(#katanaPommelA)" stroke="#020617" strokeWidth="1.9" />
+            <circle cx="3.8" cy="32" r="1.7" fill="#F59E0B" stroke="#78350F" strokeWidth="0.9" />
           </g>
         </svg>
       );
