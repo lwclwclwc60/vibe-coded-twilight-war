@@ -9,17 +9,30 @@ const FOOTSTEP_MIX: Record<FootstepSurface, { filter: number; duration: number; 
   wood: { filter: 1950, duration: 0.095, thump: 155 },
 };
 
-export const SHOT_MIX: Record<GunKind, { rate: number; lowpass: number; gain: number }> = {
-  pistol: { rate: 0.97, lowpass: 7600, gain: 0.34 },
-  rifle: { rate: 0.83, lowpass: 5200, gain: 0.35 },
-  shotgun: { rate: 0.66, lowpass: 4500, gain: 0.38 },
-  sniper: { rate: 0.75, lowpass: 13500, gain: 0.36 },
+export const SHOT_MIX: Record<GunKind, { gain: number }> = {
+  pistol: { gain: 0.34 },
+  rifle: { gain: 0.35 },
+  shotgun: { gain: 0.38 },
+  sniper: { gain: 0.37 },
 };
 
-type SampleKey = 'pistol' | 'greatsword' | 'knife' | 'claw' | 'shieldBash' | 'hit' | 'switch';
+type SampleKey =
+  | 'pistol'
+  | 'rifle'
+  | 'shotgun'
+  | 'sniper'
+  | 'greatsword'
+  | 'knife'
+  | 'claw'
+  | 'shieldBash'
+  | 'hit'
+  | 'switch';
 
 const SAMPLE_FILES: Record<SampleKey, string> = {
   pistol: 'pistol-shot.wav',
+  rifle: 'rifle-shot.wav',
+  shotgun: 'shotgun-shot.wav',
+  sniper: 'sniper-shot.wav',
   greatsword: 'greatsword-slash.wav',
   knife: 'knife-slash.wav',
   claw: 'claw-slash.wav',
@@ -30,9 +43,6 @@ const SAMPLE_FILES: Record<SampleKey, string> = {
 
 interface PlaySampleOptions {
   volume: number;
-  rate?: number;
-  pitchJitter?: number;
-  lowpass?: number;
   fallback: () => void;
 }
 
@@ -177,21 +187,10 @@ class SoundEngine {
 
       const source = ctx.createBufferSource();
       source.buffer = buffer;
-      const jitter = opts.pitchJitter ?? 0.04;
-      const baseRate = opts.rate ?? 1;
-      source.playbackRate.value = baseRate * (1 - jitter + Math.random() * jitter * 2);
 
       const gain = ctx.createGain();
       gain.gain.value = opts.volume;
-
-      if (opts.lowpass) {
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.value = opts.lowpass;
-        source.connect(filter).connect(gain).connect(this.output!);
-      } else {
-        source.connect(gain).connect(this.output!);
-      }
+      source.connect(gain).connect(this.output!);
       source.start();
     });
   }
@@ -199,11 +198,8 @@ class SoundEngine {
   gunshot(kind: GunKind, volume = 1) {
     if (volume <= 0) return;
     const mix = SHOT_MIX[kind];
-    this.playSample('pistol', {
+    this.playSample(kind, {
       volume: mix.gain * volume,
-      rate: mix.rate,
-      pitchJitter: 0.03,
-      lowpass: mix.lowpass,
       fallback: () => this.playNoise(0.15, 0.17 * volume, 3800),
     });
   }
@@ -256,8 +252,6 @@ class SoundEngine {
     if (volume <= 0) return;
     this.playSample('shieldBash', {
       volume: 0.50 * volume,
-      rate: 0.95,
-      pitchJitter: 0.05,
       fallback: () => {
         this.playNoise(0.11, 0.22 * volume, 980);
         this.playTone(98, 42, 0.11, 'sine', 0.12 * volume);
@@ -274,8 +268,6 @@ class SoundEngine {
     if (kindOrHeavy === 'greatsword' || kindOrHeavy === true) {
       this.playSample('greatsword', {
         volume: 0.52 * volume,
-        rate: 0.92,
-        pitchJitter: 0.05,
         fallback: () => {
           this.playNoise(0.22, 0.30 * volume, 1350);
           this.playTone(240, 85, 0.18, 'triangle', 0.14 * volume);
@@ -286,8 +278,6 @@ class SoundEngine {
     if (kindOrHeavy === 'claw') {
       this.playSample('claw', {
         volume: 0.44 * volume,
-        rate: 1.08,
-        pitchJitter: 0.06,
         fallback: () => {
           this.playNoise(0.095, 0.27 * volume, 3600);
           this.playTone(1150, 380, 0.075, 'triangle', 0.13 * volume);
@@ -297,8 +287,6 @@ class SoundEngine {
     }
     this.playSample('knife', {
       volume: 0.44 * volume,
-      rate: 1.04,
-      pitchJitter: 0.06,
       fallback: () => {
         this.playNoise(0.11, 0.28 * volume, 4200);
         this.playTone(1450, 420, 0.085, 'triangle', 0.14 * volume);
@@ -314,9 +302,6 @@ class SoundEngine {
   switchWeapon(comboCancel = false) {
     this.playSample('switch', {
       volume: comboCancel ? 0.34 : 0.22,
-      rate: comboCancel ? 1.18 : 1.02,
-      pitchJitter: 0.04,
-      lowpass: comboCancel ? 8000 : 5200,
       fallback: () => this.playNoise(0.05, comboCancel ? 0.095 : 0.06, 2600),
     });
   }
@@ -364,8 +349,6 @@ class SoundEngine {
   hit(crit = false) {
     this.playSample('hit', {
       volume: crit ? 0.42 : 0.28,
-      rate: crit ? 1.14 : 0.96,
-      pitchJitter: 0.05,
       fallback: () => this.playNoise(crit ? 0.085 : 0.048, crit ? 0.13 : 0.065, crit ? 2200 : 1150),
     });
   }

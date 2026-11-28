@@ -4,6 +4,24 @@ https://freesound.org/people/michorvath/sounds/427592/
 License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
 Edited for gameplay by trimming the lead-in and fading the tail.
 
+rifle-shot.wav
+Source: "AR-15/D_24P.wav" from "The Free Firearm Sound Library"
+https://opengameart.org/content/the-free-firearm-sound-library
+License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
+Edited for gameplay: converted to mono 44.1kHz PCM WAV, trimmed to 0.50s, peak-normalized to -1.5 dBFS, and faded out tail.
+
+shotgun-shot.wav
+Source: "Mossberg/N_26P.wav" from "The Free Firearm Sound Library"
+https://opengameart.org/content/the-free-firearm-sound-library
+License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
+Edited for gameplay: converted to mono 44.1kHz PCM WAV, trimmed to 0.65s, peak-normalized to -1.5 dBFS, and faded out tail.
+
+sniper-shot.wav
+Source: "Mosin Nagant/M_21P.wav" from "The Free Firearm Sound Library"
+https://opengameart.org/content/the-free-firearm-sound-library
+License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
+Edited for gameplay: converted to mono 44.1kHz PCM WAV, trimmed to 0.72s, peak-normalized to -1.5 dBFS, and faded out tail.
+
 greatsword-slash.wav
 Source: "battle/swing.wav" from "RPG Sound Pack" by artisticdude
 https://opengameart.org/content/rpg-sound-pack
