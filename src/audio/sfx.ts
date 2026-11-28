@@ -26,7 +26,8 @@ type SampleKey =
   | 'claw'
   | 'shieldBash'
   | 'hit'
-  | 'switch';
+  | 'switch'
+  | 'playerDown';
 
 const SAMPLE_FILES: Record<SampleKey, string> = {
   pistol: 'pistol-shot.wav',
@@ -39,6 +40,7 @@ const SAMPLE_FILES: Record<SampleKey, string> = {
   shieldBash: 'shield-bash.wav',
   hit: 'melee-hit.wav',
   switch: 'weapon-switch.wav',
+  playerDown: 'player-down.wav',
 };
 
 interface PlaySampleOptions {
@@ -359,9 +361,14 @@ class SoundEngine {
   }
 
   playerDown() {
-    this.playNoise(0.25, 0.22, 800);
-    this.playTone(96, 33, 0.32, 'sine', 0.17);
-    this.playNoise(0.1, 0.07, 1500, 0.17);
+    this.playSample('playerDown', {
+      volume: 0.45,
+      fallback: () => {
+        this.playNoise(0.25, 0.22, 800);
+        this.playTone(96, 33, 0.32, 'sine', 0.17);
+        this.playNoise(0.1, 0.07, 1500, 0.17);
+      },
+    });
   }
 
   playerRespawn() {

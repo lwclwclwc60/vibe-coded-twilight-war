@@ -4761,8 +4761,9 @@ describe('Multiplayer same-faction friendly-fire symmetry (Host <-> Client <-> C
 });
 
 describe('Dead-player spectator camera and non-freezing post-match epilogue', () => {
-  it('tracks living combatants when dead, cycles targets on Space/Click, and allows WASD free-cam panning', () => {
-    const { engine } = createTestEngine('shadow', 'industrial_warehouse', 100);
+  it('keeps camera fixed while respawning with lives remaining, and unlocks free-cam/spectator only when all 3 lives are spent', () => {
+    const downSpy = vi.spyOn(sfx, 'playerDown');
+    const { engine, getHud } = createTestEngine('shadow', 'industrial_warehouse', 100);
     const aliveA = engine.enemies[0];
     const aliveB = engine.enemies[1];
     expect(aliveA).toBeDefined();
@@ -4776,24 +4777,44 @@ describe('Dead-player spectator camera and non-freezing post-match epilogue', ()
     aliveB.x = 20 * TILE;
     aliveB.y = 10 * TILE;
 
-    // Kill player into RESPAWNING at far left
     const priv = engine as unknown as {
       respawnTimer: number;
       camera: { x: number; y: number; zoom: number; shake: number };
+      handlePlayerDeath: (id?: string) => void;
     };
+
+    // 1. First death (3 -> 2 lives): plays death SFX, enters RESPAWNING with fixed camera & no free-cam
     engine.player.x = 4 * TILE;
     engine.player.y = 10 * TILE;
-    engine.player.hp = 0;
-    engine.player.lives = 2;
-    engine.status = 'RESPAWNING';
-    priv.respawnTimer = 2.5;
+    engine.player.lives = 3;
     priv.camera.x = 8 * TILE;
     priv.camera.y = 10 * TILE;
+    priv.handlePlayerDeath();
+    expect(downSpy).toHaveBeenCalledTimes(1);
+    expect(engine.status).toBe('RESPAWNING');
+    expect(engine.player.lives).toBe(2);
+    expect(getHud()?.spectating).toBeNull();
 
-    // Camera smoothly follows living target instead of staying frozen at corpse
+    const fixedCamX = priv.camera.x;
+    const fixedCamY = priv.camera.y;
+    engine.setKey('KeyD', true);
+    engine.setKey('Space', true);
+    for (let i = 0; i < 10; i++) {
+      engine.update(0.05, 960, 720);
+    }
+    engine.setKey('KeyD', false);
+    engine.setKey('Space', false);
+    expect(priv.camera.x).toBe(fixedCamX);
+    expect(priv.camera.y).toBe(fixedCamY);
+
+    // 2. All 3 lives spent while match continues (lives = 0, hp = 0, status = PLAYING): unlocks spectator follow + WASD free-cam
+    engine.status = 'PLAYING';
+    engine.player.hp = 0;
+    engine.player.lives = 0;
     for (let i = 0; i < 20; i++) {
       engine.update(0.05, 960, 720);
     }
+    expect(getHud()?.spectating).toBeTruthy();
     expect(priv.camera.x).toBeGreaterThan(10 * TILE);
 
     // Pressing WASD switches to free-cam and pans camera smoothly
@@ -4813,6 +4834,7 @@ describe('Dead-player spectator camera and non-freezing post-match epilogue', ()
       engine.update(0.05, 960, 720);
     }
     expect(priv.camera.x).not.toBe(camAfterSpace);
+    downSpy.mockRestore();
   });
 
   it('plays victory/defeat SFX and keeps animations, reloads, and Black Dragon Wave moving with zero damage on GAME_OVER/VICTORY', () => {

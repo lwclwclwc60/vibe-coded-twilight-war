@@ -3995,7 +3995,8 @@ export class TwilightEngine {
   }
 
   private isSpectating(): boolean {
-    return this.status === 'RESPAWNING' || (this.status === 'PLAYING' && this.player.hp <= 0);
+    // 僅在經典模式三命全數耗盡且戰局仍在進行中時，才開放自由視角與觀戰切換
+    return this.status === 'PLAYING' && this.player.hp <= 0 && !this.siege && this.player.lives <= 0;
   }
 
   private getSpectatorCandidates(): EnemyEntity[] {
@@ -4036,6 +4037,14 @@ export class TwilightEngine {
   private updateCamera(dt: number) {
     const { width: canvasWidth, height: canvasHeight } = this.viewport;
     const p = this.player;
+
+    if (this.status === 'RESPAWNING') {
+      // 尚餘生命／等待重生倒數期間：保持視角固定於陣亡位置，不跟隨隊友或自由移動鏡頭
+      this.spectatorMode = 'follow';
+      this.spectatorTargetId = null;
+      this.cameraLookOffset = { x: 0, y: 0 };
+      return;
+    }
 
     if (this.isSpectating()) {
       const mv = this.getMoveVector();
@@ -7469,6 +7478,7 @@ export class TwilightEngine {
 
     const p = this.player;
     const prevStatus = this.status;
+    const prevHp = p.hp;
     const prevPlayerSnap = this.clientLerpTargets.get('__local__');
     if (!prevPlayerSnap || dist(p.x, p.y, localActor.x, localActor.y) > 160) {
       p.x = localActor.x;
@@ -7795,6 +7805,9 @@ export class TwilightEngine {
       this.status = 'RESPAWNING';
     } else {
       this.status = snapshot.status === 'PAUSED' ? 'PAUSED' : 'PLAYING';
+    }
+    if (this.hasEmittedClientHud && prevHp > 0 && p.hp <= 0) {
+      sfx.playerDown();
     }
 
     for (const ev of snapshot.events) {

@@ -57,3 +57,9 @@ Source: "battle/sword-unsheathe2.wav" from "RPG Sound Pack" by artisticdude
 https://opengameart.org/content/rpg-sound-pack
 License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
 Edited for gameplay: converted to mono 44.1kHz PCM WAV, trimmed to 0.26s, peak-normalized to -2 dBFS, and faded out tail.
+
+player-down.wav
+Source: "2yell1.wav" from "Male Grunt/Yelling sounds" by HaelDB
+https://opengameart.org/content/male-gruntyelling-sounds
+License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
+Edited for gameplay: converted to mono 44.1kHz PCM WAV, trimmed leading silence, clamped to 0.55s, peak-normalized to -2 dBFS, and faded out tail.
